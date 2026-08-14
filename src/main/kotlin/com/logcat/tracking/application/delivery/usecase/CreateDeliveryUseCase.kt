@@ -5,6 +5,7 @@ import com.logcat.tracking.application.delivery.dto.CreateDeliveryResult
 import com.logcat.tracking.core.delivery.model.Delivery
 import com.logcat.tracking.core.delivery.port.DeliveryCommandPort
 import com.logcat.tracking.core.common.port.IdGenerator
+import com.logcat.tracking.core.delivery.port.DeliveryEventPort
 import com.logcat.tracking.core.delivery.service.DeliveryTrackingNumberGenerator
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -13,6 +14,7 @@ import java.time.Instant
 @Service
 class CreateDeliveryUseCase(
     private val deliveryCommandPort: DeliveryCommandPort,
+    private val deliveryEventPort: DeliveryEventPort,
     private val idGenerator: IdGenerator,
 ) {
 
@@ -31,6 +33,8 @@ class CreateDeliveryUseCase(
         )
 
         val saved = deliveryCommandPort.save(delivery)
+
+        deliveryEventPort.publishStatusChanged(saved.id, saved.status, now)
 
         return CreateDeliveryResult(
             deliveryId = saved.id,

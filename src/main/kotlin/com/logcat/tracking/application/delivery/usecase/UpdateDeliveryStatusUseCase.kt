@@ -4,6 +4,7 @@ import com.logcat.tracking.core.delivery.exception.DeliveryNotFoundException
 import com.logcat.tracking.core.delivery.model.DeliveryStatus
 import com.logcat.tracking.core.delivery.model.DeliveryStatusChange
 import com.logcat.tracking.core.delivery.port.DeliveryCommandPort
+import com.logcat.tracking.core.delivery.port.DeliveryEventPort
 import com.logcat.tracking.core.delivery.port.DeliveryQueryPort
 import com.logcat.tracking.core.delivery.service.DeliveryStatusManager
 import org.springframework.stereotype.Service
@@ -15,6 +16,7 @@ import java.util.UUID
 class UpdateDeliveryStatusUseCase(
     private val deliveryQueryPort: DeliveryQueryPort,
     private val deliveryCommandPort: DeliveryCommandPort,
+    private val deliveryEventPort: DeliveryEventPort,
     private val statusManager: DeliveryStatusManager,
 ) {
 
@@ -36,5 +38,7 @@ class UpdateDeliveryStatusUseCase(
                 changedAt = now,
             )
         )
+
+        deliveryEventPort.publishStatusChanged(delivery.id, validated, now)
     }
 }
