@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 import java.time.Instant
 import java.util.*
 
-@Component
+//@Component
 class SseDeliveryEventAdapter(
     private val registry: SseEmitterRegistry,
 ) : DeliveryEventPort {
