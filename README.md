@@ -120,40 +120,6 @@ ch2 는 일부러 잘못 만드는 단계다. **dual write 를 먼저 재현하�
 
 ---
 
-## 실행
-
-```bash
-docker compose up -d postgres
-
-# ⚠ 최초 1회만: V0·V1 을 psql 로 직접 넣는다.
-#   generateJooq 는 실제 스키마를 읽어야 하는데, 생성 코드가 없으면 앱이 컴파일되지 않는다.
-#   반드시 둘 다 넣을 것 — V0 만 넣으면 함수 때문에 Flyway 가 baseline 을 잡고
-#   V0·V1 을 스킵해서, 테이블 없이 기동하는 상태가 된다.
-for f in V0__install_extensions V1__create_deliveries; do
-  docker exec -i tracking-postgres psql -U tracking -d tracking \
-    < src/main/resources/db/migration/$f.sql
-done
-
-./gradlew generateJooq
-./gradlew bootRun
-```
-
-스키마가 꼬였을 때는 통째로 지우고 앱을 띄우면 Flyway 가 전부 적용한다.
-
-```bash
-docker exec tracking-postgres psql -U tracking -d tracking \
-  -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO tracking;"
-```
-
-포트: PostgreSQL `15433` · Redis `16379` · Kafka `19092` · 앱 `8080`
-
-```bash
-# 실시간 스트림 (상태를 바꿔야 첫 프레임이 온다)
-curl -N http://localhost:8080/api/v1/deliveries/sse/{deliveryId}/track
-```
-
----
-
 ## 구조
 
 ```
