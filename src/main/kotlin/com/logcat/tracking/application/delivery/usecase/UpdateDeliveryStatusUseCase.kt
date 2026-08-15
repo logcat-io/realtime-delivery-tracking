@@ -39,6 +39,7 @@ class UpdateDeliveryStatusUseCase(
             )
         )
 
+        // 외부로 나간다. <- 정합성에 문제가 될 수 있는 부분
         deliveryEventPort.publishStatusChanged(delivery.id, validated, now)
     }
 }

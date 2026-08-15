@@ -67,7 +67,7 @@ dependencies {
 //    implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
     // Kafka — Outbox 발행 대상
-//    implementation("org.springframework.kafka:spring-kafka")
+    implementation("org.springframework.kafka:spring-kafka")
 
     // UUID v7 (시간 정렬 가능한 PK)
     implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
