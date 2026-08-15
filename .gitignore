@@ -15,3 +15,5 @@ out/
 .kotlin/
 
 .env
+# 측정 스크립트 — 로컬 전용
+scripts/
