@@ -1,6 +1,7 @@
 package com.logcat.tracking.external.messaging.kafka.delivery
 
 import com.logcat.tracking.external.messaging.kafka.delivery.dto.DeliveryStatusChangedEvent
+import com.logcat.tracking.external.scheduler.OutboxPublisher
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener
@@ -18,7 +19,7 @@ class DeliveryEventConsumer(
     }
 
     @KafkaListener(
-        topics = ["delivery-status-events"],
+        topics = [OutboxPublisher.TOPIC],
         groupId = "delivery-sse-group",
     )
     fun onStatusChanged(
