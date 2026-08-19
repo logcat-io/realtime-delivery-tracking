@@ -14,7 +14,7 @@ CREATE TABLE outbox_events
     created_at     TIMESTAMPTZ  NOT NULL DEFAULT now(),
     -- 발행 완료 시각. NULL 이면 아직 안 나갔다는 뜻 — 적체 관측의 기준점.
     published_at   TIMESTAMPTZ,
-    -- 발행 실패 횟수. 임계 초과 처리는 ch7(DLQ/재시도)에서 다룬다.
+    -- 발행 실패 횟수. 임계 초과 시 격리(DLQ)는 아직 없다.
     retry_count    INT          NOT NULL DEFAULT 0
 );
 
