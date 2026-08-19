@@ -64,7 +64,7 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
 
     // Redis — Pub/Sub fan-out
-//    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
     // Kafka — Outbox 발행 대상
     implementation("org.springframework.kafka:spring-kafka")
