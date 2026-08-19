@@ -25,6 +25,7 @@ import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
+import org.testcontainers.containers.GenericContainer
 import org.testcontainers.kafka.ConfluentKafkaContainer
 import org.testcontainers.utility.DockerImageName
 import org.springframework.transaction.support.TransactionTemplate
@@ -54,6 +55,12 @@ class OutboxPublisherIntegrationTest {
             DockerImageName.parse("confluentinc/cp-kafka:7.6.1"),
         )
 
+        // ch4 에서 Redis 구독자가 컨텍스트에 들어오면서, 이 테스트도 Redis 없이는
+        // 기동조차 못 하게 됐다. outbox 검증에 Redis 를 쓰지는 않지만 컨텍스트가 요구한다.
+        @Container
+        @JvmStatic
+        val redis = GenericContainer("redis:7-alpine").apply { withExposedPorts(6379) }
+
         // 컨테이너는 매 실행마다 랜덤 호스트 포트에 바인딩된다.
         // application.yml 의 고정 포트(15433/19092)를 그대로 쓰면 로컬 docker-compose 를
         // 향하게 되어, 초록불은 뜨는데 검증 대상이 컨테이너가 아니게 된다.
@@ -64,6 +71,8 @@ class OutboxPublisherIntegrationTest {
             registry.add("spring.datasource.url") { postgres.jdbcUrl }
             registry.add("spring.datasource.username") { postgres.username }
             registry.add("spring.datasource.password") { postgres.password }
+            registry.add("spring.data.redis.host") { redis.host }
+            registry.add("spring.data.redis.port") { redis.firstMappedPort }
             registry.add("spring.kafka.bootstrap-servers") { kafka.bootstrapServers }
         }
     }
@@ -171,9 +180,9 @@ class OutboxPublisherIntegrationTest {
     // ── ch2 의 유령 이벤트 재현을 그대로 반복한다. 이번엔 0 이 나와야 한다 ──
     //
     // ch2:  트랜잭션이 롤백돼도 이벤트는 이미 브로커에 나가 있었다  → 유령
-    // ch3:  롤백되면 outbox 행 자체가 사라진다 → 발행될 물건이 없다 → 유령 구조적 불가
+    // ch3:  롤백되면 outbox 행 자체가 사라진다 → 발행될 이벤트가 없다 → 유령 구조적 불가
     @Test
-    fun `롤백되면 outbox 행이 남지 않아 발행될 물건이 없다`() {
+    fun `롤백되면 outbox 행이 남지 않아 발행될 이벤트가 없다`() {
         val deliveryId = idGenerator.nextId()
         val now = Instant.now()
 
@@ -210,7 +219,7 @@ class OutboxPublisherIntegrationTest {
             "상태 변경도 롤백되어야 한다",
         )
 
-        // 발행할 물건이 없으므로 폴러를 돌려도 아무 일이 없다.
+        // 발행할 이벤트가 없으므로 워커를 돌려도 아무 일이 없다.
         publisher.publishPendingEvents()
         assertEquals(before, countOutbox())
     }
