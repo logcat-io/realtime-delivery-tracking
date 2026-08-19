@@ -29,7 +29,7 @@ import java.util.UUID
 // Redis Pub/Sub 왕복만 검증한다.
 // "인스턴스 A 가 받은 이벤트가 인스턴스 B 의 연결에 도달한다" 는 단일 JVM 에서 재현할 수 없다.
 // 컨텍스트를 둘 띄워 각각의 SseEmitterRegistry 를 구분해야 하는데, 그렇게 만든 테스트는
-// 복잡해서 아무도 안 고친다. 교차 도달은 ch4 §9.3 수동 절차로 남긴다.
+// 복잡해서 아무도 안 고친다. 교차 도달은 수동 절차로 확인한다.
 @SpringBootTest
 @Testcontainers
 @DisplayName("Redis Pub/Sub fan-out: 채널 왕복")

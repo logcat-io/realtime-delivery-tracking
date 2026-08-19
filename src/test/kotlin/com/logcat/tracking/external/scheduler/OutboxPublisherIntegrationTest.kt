@@ -55,8 +55,8 @@ class OutboxPublisherIntegrationTest {
             DockerImageName.parse("confluentinc/cp-kafka:7.6.1"),
         )
 
-        // ch4 에서 Redis 구독자가 컨텍스트에 들어오면서, 이 테스트도 Redis 없이는
-        // 기동조차 못 하게 됐다. outbox 검증에 Redis 를 쓰지는 않지만 컨텍스트가 요구한다.
+        // Redis 구독자가 컨텍스트에 들어온 뒤로 이 테스트도 Redis 없이는 기동하지 못한다.
+        // outbox 검증에 Redis 를 쓰지는 않지만 컨텍스트가 요구한다.
         @Container
         @JvmStatic
         val redis = GenericContainer("redis:7-alpine").apply { withExposedPorts(6379) }
@@ -177,10 +177,10 @@ class OutboxPublisherIntegrationTest {
     }
 
 
-    // ── ch2 의 유령 이벤트 재현을 그대로 반복한다. 이번엔 0 이 나와야 한다 ──
+    // ── 유령 이벤트 재현을 그대로 반복한다. 이번엔 0 이 나와야 한다 ──
     //
-    // ch2:  트랜잭션이 롤백돼도 이벤트는 이미 브로커에 나가 있었다  → 유령
-    // ch3:  롤백되면 outbox 행 자체가 사라진다 → 발행될 이벤트가 없다 → 유령 구조적 불가
+    // 직접 발행:  트랜잭션이 롤백돼도 이벤트는 이미 브로커에 나가 있었다 → 유령
+    // outbox:    롤백되면 행 자체가 사라진다 → 발행될 이벤트가 없다 → 유령 구조적 불가
     @Test
     fun `롤백되면 outbox 행이 남지 않아 발행될 이벤트가 없다`() {
         val deliveryId = idGenerator.nextId()
