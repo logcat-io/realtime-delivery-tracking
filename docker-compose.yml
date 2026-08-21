@@ -4,7 +4,7 @@
 #   ./gradlew bootRun --args='--server.port=8080'
 #   ./gradlew bootRun --args='--server.port=8081'
 # 두 인스턴스가 같은 Kafka consumer group 을 쓰므로 이벤트는 한쪽에만 도달한다.
-# Redis Pub/Sub 이 그 간극을 메우는 구조 — docs/develop-guide/ch3 참조.
+# Redis Pub/Sub 이 그 간극을 메운다.
 
 services:
   # ──────────────────────────────────────────

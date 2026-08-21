@@ -2,7 +2,7 @@
 build/
 !gradle/wrapper/gradle-wrapper.jar
 
-# 개발 가이드·원본 문서 — 로컬 전용
+# 로컬 전용 문서
 docs/
 
 # jOOQ 생성 코드 — 스키마에서 재생성한다 (docker compose up → generateJooq)
