@@ -5,8 +5,7 @@ build/
 # 로컬 전용 문서
 docs/
 
-# jOOQ 생성 코드 — 스키마에서 재생성한다 (docker compose up → generateJooq)
-src/main/generated/
+# jOOQ 생성 코드는 커밋한다 — 없으면 클론 후 컴파일이 안 된다
 
 .idea/
 *.iml
