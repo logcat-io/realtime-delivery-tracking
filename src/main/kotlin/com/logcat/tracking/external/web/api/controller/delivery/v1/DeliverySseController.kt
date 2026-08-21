@@ -1,5 +1,6 @@
 package com.logcat.tracking.external.web.api.controller.delivery.v1
 
+import com.logcat.tracking.application.delivery.usecase.TrackDeliveryUseCase
 import com.logcat.tracking.external.web.api.sse.SseEmitterRegistry
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
@@ -13,17 +14,30 @@ import java.util.*
 @RequestMapping("/api/v1/deliveries/sse")
 class DeliverySseController(
     private val sseEmitterRegistry: SseEmitterRegistry,
+    private val trackDeliveryUseCase: TrackDeliveryUseCase,
 ) {
 
     @GetMapping("/{deliveryId}/track", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     fun track(@PathVariable deliveryId: UUID): SseEmitter {
         val emitter = SseEmitter(30 * 60 * 1000L)
 
-        sseEmitterRegistry.register(deliveryId, emitter)
-
         emitter.onCompletion { sseEmitterRegistry.remove(deliveryId, emitter) }
         emitter.onTimeout { sseEmitterRegistry.remove(deliveryId, emitter) }
         emitter.onError { sseEmitterRegistry.remove(deliveryId, emitter) }
+
+        sseEmitterRegistry.register(deliveryId, emitter)
+
+        try {
+            val snapshot = trackDeliveryUseCase.execute(deliveryId)
+            emitter.send(
+                SseEmitter.event()
+                    .name("status")
+                    .data(snapshot),
+            )
+        } catch (e: Exception) {
+            sseEmitterRegistry.remove(deliveryId, emitter)
+            throw e
+        }
 
         return emitter
     }

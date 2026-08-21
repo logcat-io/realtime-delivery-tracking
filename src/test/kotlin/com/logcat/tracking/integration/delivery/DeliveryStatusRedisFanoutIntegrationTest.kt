@@ -3,6 +3,7 @@ package com.logcat.tracking.integration.delivery
 import com.logcat.tracking.external.messaging.kafka.delivery.dto.DeliveryStatusChangedEvent
 import com.logcat.tracking.external.messaging.redis.DeliveryStatusRedisPublisher
 import com.logcat.tracking.external.web.api.sse.SseEmitterRegistry
+import com.logcat.tracking.integration.SharedContainers
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -17,12 +18,6 @@ import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
-import org.testcontainers.containers.GenericContainer
-import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
-import org.testcontainers.kafka.ConfluentKafkaContainer
-import org.testcontainers.utility.DockerImageName
 import java.time.Instant
 import java.util.UUID
 
@@ -31,39 +26,13 @@ import java.util.UUID
 // 컨텍스트를 둘 띄워 각각의 SseEmitterRegistry 를 구분해야 하는데, 그렇게 만든 테스트는
 // 복잡해서 아무도 안 고친다. 교차 도달은 수동 절차로 확인한다.
 @SpringBootTest
-@Testcontainers
 @DisplayName("Redis Pub/Sub fan-out: 채널 왕복")
 class DeliveryStatusRedisFanoutIntegrationTest {
 
     companion object {
-        @Container
-        @JvmStatic
-        val postgres = PostgreSQLContainer("postgres:16-alpine").apply {
-            withDatabaseName("tracking_test")
-            withUsername("test")
-            withPassword("test")
-        }
-
-        @Container
-        @JvmStatic
-        val redis = GenericContainer("redis:7-alpine").apply { withExposedPorts(6379) }
-
-        @Container
-        @JvmStatic
-        val kafka = ConfluentKafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6.1"))
-
-        // 이게 없으면 로컬 docker-compose Redis 를 향한다. 개발 중 띄워 둔 앱의 구독자가
-        // 같은 채널에 붙어 있어 결과가 오염된다.
         @DynamicPropertySource
         @JvmStatic
-        fun configureProperties(registry: DynamicPropertyRegistry) {
-            registry.add("spring.datasource.url") { postgres.jdbcUrl }
-            registry.add("spring.datasource.username") { postgres.username }
-            registry.add("spring.datasource.password") { postgres.password }
-            registry.add("spring.data.redis.host") { redis.host }
-            registry.add("spring.data.redis.port") { redis.firstMappedPort }
-            registry.add("spring.kafka.bootstrap-servers") { kafka.bootstrapServers }
-        }
+        fun configureProperties(registry: DynamicPropertyRegistry) = SharedContainers.bind(registry)
     }
 
     @Autowired lateinit var sut: DeliveryStatusRedisPublisher
