@@ -28,7 +28,7 @@ class UpdateDeliveryStatusUseCase(
         val validated = statusManager.transition(delivery.status, target)
         val now = Instant.now()
 
-        deliveryCommandPort.updateStatus(deliveryId, validated, now)
+        deliveryCommandPort.updateStatus(deliveryId, validated, delivery.status, now)
         deliveryCommandPort.saveStatusHistory(
             deliveryId = deliveryId,
             DeliveryStatusChange(

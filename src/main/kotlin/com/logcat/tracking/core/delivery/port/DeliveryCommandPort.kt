@@ -10,7 +10,7 @@ interface DeliveryCommandPort {
 
     fun save(delivery: Delivery): Delivery
 
-    fun updateStatus(deliveryId: UUID, status: DeliveryStatus, now: Instant)
+    fun updateStatus(deliveryId: UUID, status: DeliveryStatus, expected: DeliveryStatus, now: Instant)
 
     fun saveStatusHistory(deliveryId: UUID, change: DeliveryStatusChange)
 }

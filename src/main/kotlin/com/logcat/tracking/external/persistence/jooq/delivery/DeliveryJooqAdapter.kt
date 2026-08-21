@@ -52,12 +52,13 @@ class DeliveryJooqAdapter(
     override fun updateStatus(
         deliveryId: UUID,
         status: DeliveryStatus,
+        expected: DeliveryStatus,
         now: Instant
     ) {
         val updated = dsl.update(DELIVERIES)
             .set(DELIVERIES.STATUS, status.name)
             .set(DELIVERIES.UPDATED_AT, now.atOffset(ZoneOffset.UTC))
-            .where(DELIVERIES.ID.eq(deliveryId))
+            .where(DELIVERIES.ID.eq(deliveryId).and(DELIVERIES.STATUS.eq(expected.name)))
             .execute()
 
         check(updated == 1) { "Failed to update delivery status for ID: $deliveryId" }
