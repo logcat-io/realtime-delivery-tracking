@@ -34,22 +34,66 @@ class OutboxEventJooqAdapter(
             .execute()
     }
 
-    fun findPendingEvents(limit: Int = 50): List<OutboxEvent> =
-        dsl.select(
-            OUTBOX_EVENTS.ID,
-            OUTBOX_EVENTS.AGGREGATE_TYPE,
-            OUTBOX_EVENTS.AGGREGATE_ID,
-            OUTBOX_EVENTS.EVENT_TYPE,
-            OUTBOX_EVENTS.PAYLOAD,
-            OUTBOX_EVENTS.RETRY_COUNT,
-        )
+    fun markPublished(id: List<UUID>, claimedAt: Instant, now: Instant): Int =
+        dsl.update(OUTBOX_EVENTS)
+            .set(OUTBOX_EVENTS.STATUS, "PUBLISHED")
+            .set(OUTBOX_EVENTS.PUBLISHED_AT, now.atOffset(ZoneOffset.UTC))
+            .where(
+                OUTBOX_EVENTS.ID.`in`(id)
+                    .and(OUTBOX_EVENTS.CLAIMED_AT.eq(claimedAt.atOffset(ZoneOffset.UTC)))
+            )
+            .execute()
+
+    fun markFailed(id: List<UUID>, claimedAt: Instant, now: Instant): Int =
+        dsl.update(OUTBOX_EVENTS)
+            .set(OUTBOX_EVENTS.RETRY_COUNT, OUTBOX_EVENTS.RETRY_COUNT + 1)
+            .set(OUTBOX_EVENTS.STATUS, "PENDING")
+            .setNull(OUTBOX_EVENTS.CLAIMED_AT)
+            .where(
+                OUTBOX_EVENTS.ID.`in`(id)
+                    .and(
+                        OUTBOX_EVENTS.CLAIMED_AT.eq(
+                            claimedAt.atOffset(
+                                ZoneOffset.UTC
+                            )
+                        )
+                    )
+            )
+            .execute()
+
+    fun reclaimStaleClaims(claimedBefore: Instant): Int =
+        dsl.update(OUTBOX_EVENTS)
+            .set(OUTBOX_EVENTS.RECLAIM_COUNT, OUTBOX_EVENTS.RECLAIM_COUNT + 1)
+            .set(OUTBOX_EVENTS.STATUS, "PENDING")
+            .setNull(OUTBOX_EVENTS.CLAIMED_AT)
+            .where(OUTBOX_EVENTS.CLAIMED_AT.le(claimedBefore.atOffset(ZoneOffset.UTC))
+                .and(OUTBOX_EVENTS.STATUS.eq("CLAIMED")))
+            .execute()
+
+    fun claimPendingEvents(limit: Int, now: Instant): List<OutboxEvent> {
+        val ids = dsl.select(OUTBOX_EVENTS.ID)
             .from(OUTBOX_EVENTS)
             .where(OUTBOX_EVENTS.STATUS.eq("PENDING"))
-            .and(OUTBOX_EVENTS.RETRY_COUNT.le(5))
             .orderBy(OUTBOX_EVENTS.CREATED_AT.asc())
             .limit(limit)
             .forUpdate()
             .skipLocked()
+            .fetch(OUTBOX_EVENTS.ID)
+
+        if (ids.isEmpty()) return emptyList()
+
+        return dsl.update(OUTBOX_EVENTS)
+            .set(OUTBOX_EVENTS.STATUS, "CLAIMED")
+            .set(OUTBOX_EVENTS.CLAIMED_AT, now.atOffset(ZoneOffset.UTC))
+            .where(OUTBOX_EVENTS.ID.`in`(ids))
+            .returning(
+                OUTBOX_EVENTS.ID,
+                OUTBOX_EVENTS.AGGREGATE_TYPE,
+                OUTBOX_EVENTS.AGGREGATE_ID,
+                OUTBOX_EVENTS.EVENT_TYPE,
+                OUTBOX_EVENTS.PAYLOAD,
+                OUTBOX_EVENTS.RETRY_COUNT,
+            )
             .fetch { record ->
                 OutboxEvent(
                     id = record[OUTBOX_EVENTS.ID]!!,
@@ -60,19 +104,5 @@ class OutboxEventJooqAdapter(
                     retryCount = record[OUTBOX_EVENTS.RETRY_COUNT]!!,
                 )
             }
-
-    fun markPublished(id: UUID) {
-        dsl.update(OUTBOX_EVENTS)
-            .set(OUTBOX_EVENTS.STATUS, "PUBLISHED")
-            .set(OUTBOX_EVENTS.PUBLISHED_AT, Instant.now().atOffset(ZoneOffset.UTC))
-            .where(OUTBOX_EVENTS.ID.eq(id))
-            .execute()
-    }
-
-    fun markFailed(id: UUID) {
-        dsl.update(OUTBOX_EVENTS)
-            .set(OUTBOX_EVENTS.RETRY_COUNT, OUTBOX_EVENTS.RETRY_COUNT + 1)
-            .where(OUTBOX_EVENTS.ID.eq(id))
-            .execute()
     }
 }

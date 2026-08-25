@@ -5,6 +5,7 @@ package com.logcat.tracking.jooq.generated.tables
 
 
 import com.logcat.tracking.jooq.generated.Public_
+import com.logcat.tracking.jooq.generated.indexes.IDX_OUTBOX_CLAIMED_AT
 import com.logcat.tracking.jooq.generated.indexes.IDX_OUTBOX_STATUS_CREATED
 import com.logcat.tracking.jooq.generated.keys.OUTBOX_EVENTS_PKEY
 import com.logcat.tracking.jooq.generated.tables.records.OutboxEventsRecord
@@ -120,6 +121,20 @@ open class OutboxEvents_(
      */
     val RETRY_COUNT: TableField<OutboxEventsRecord, Int?> = createField(DSL.name("retry_count"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field(DSL.raw("0"), SQLDataType.INTEGER)), this, "")
 
+    /**
+     * The column <code>public.outbox_events.claimed_at</code>. 발행을 위해 선점된 시각.
+     * CLAIMED 상태에서만 의미가 있다.
+     *      두 가지로 쓴다 — (1) 회수(reaper)의 기준값, (2) 결과 반영 시 fencing 토큰.
+     */
+    val CLAIMED_AT: TableField<OutboxEventsRecord, OffsetDateTime?> = createField(DSL.name("claimed_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "발행을 위해 선점된 시각. CLAIMED 상태에서만 의미가 있다.\n     두 가지로 쓴다 — (1) 회수(reaper)의 기준값, (2) 결과 반영 시 fencing 토큰.")
+
+    /**
+     * The column <code>public.outbox_events.reclaim_count</code>. 선점한 워커가 결과를
+     * 남기지 못하고 사라져 회수된 횟수.
+     *      retry_count(시도했고 실패)와 원인이 다르므로 카운터를 분리한다.
+     */
+    val RECLAIM_COUNT: TableField<OutboxEventsRecord, Int?> = createField(DSL.name("reclaim_count"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field(DSL.raw("0"), SQLDataType.INTEGER)), this, "선점한 워커가 결과를 남기지 못하고 사라져 회수된 횟수.\n     retry_count(시도했고 실패)와 원인이 다르므로 카운터를 분리한다.")
+
     private constructor(alias: Name, aliased: Table<OutboxEventsRecord>?): this(alias, null, null, null, aliased, null, null)
     private constructor(alias: Name, aliased: Table<OutboxEventsRecord>?, parameters: Array<Field<*>?>?): this(alias, null, null, null, aliased, parameters, null)
     private constructor(alias: Name, aliased: Table<OutboxEventsRecord>?, where: Condition?): this(alias, null, null, null, aliased, null, where)
@@ -139,7 +154,7 @@ open class OutboxEvents_(
      */
     constructor(): this(DSL.name("outbox_events"), null)
     override fun getSchema(): Schema? = if (aliased()) null else Public_.PUBLIC
-    override fun getIndexes(): List<Index> = listOf(IDX_OUTBOX_STATUS_CREATED)
+    override fun getIndexes(): List<Index> = listOf(IDX_OUTBOX_CLAIMED_AT, IDX_OUTBOX_STATUS_CREATED)
     override fun getPrimaryKey(): UniqueKey<OutboxEventsRecord> = OUTBOX_EVENTS_PKEY
     override fun `as`(alias: String): OutboxEvents_ = OutboxEvents_(DSL.name(alias), this)
     override fun `as`(alias: Name): OutboxEvents_ = OutboxEvents_(alias, this)

@@ -23,4 +23,5 @@ val IDX_DELIVERIES_ORDER: Index = Internal.createIndex(DSL.name("idx_deliveries_
 val IDX_DELIVERIES_STATUS: Index = Internal.createIndex(DSL.name("idx_deliveries_status"), Deliveries_.DELIVERIES, arrayOf(Deliveries_.DELIVERIES.STATUS), false)
 val IDX_DELIVERIES_USER_ID: Index = Internal.createIndex(DSL.name("idx_deliveries_user_id"), Deliveries_.DELIVERIES, arrayOf(Deliveries_.DELIVERIES.USER_ID), false)
 val IDX_DELIVERY_HISTORY: Index = Internal.createIndex(DSL.name("idx_delivery_history"), DeliveryStatusHistory_.DELIVERY_STATUS_HISTORY, arrayOf(DeliveryStatusHistory_.DELIVERY_STATUS_HISTORY.DELIVERY_ID), false)
+val IDX_OUTBOX_CLAIMED_AT: Index = Internal.createIndex(DSL.name("idx_outbox_claimed_at"), OutboxEvents_.OUTBOX_EVENTS, arrayOf(OutboxEvents_.OUTBOX_EVENTS.CLAIMED_AT), false)
 val IDX_OUTBOX_STATUS_CREATED: Index = Internal.createIndex(DSL.name("idx_outbox_status_created"), OutboxEvents_.OUTBOX_EVENTS, arrayOf(OutboxEvents_.OUTBOX_EVENTS.STATUS, OutboxEvents_.OUTBOX_EVENTS.CREATED_AT), false)

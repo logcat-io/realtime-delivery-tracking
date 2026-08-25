@@ -56,6 +56,14 @@ open class OutboxEventsRecord() : UpdatableRecordImpl<OutboxEventsRecord>(Outbox
         set(value): Unit = set(8, value)
         get(): Int? = get(8) as Int?
 
+    open var claimedAt: OffsetDateTime?
+        set(value): Unit = set(9, value)
+        get(): OffsetDateTime? = get(9) as OffsetDateTime?
+
+    open var reclaimCount: Int?
+        set(value): Unit = set(10, value)
+        get(): Int? = get(10) as Int?
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -65,7 +73,7 @@ open class OutboxEventsRecord() : UpdatableRecordImpl<OutboxEventsRecord>(Outbox
     /**
      * Create a detached, initialised OutboxEventsRecord
      */
-    constructor(id: UUID? = null, aggregateType: String? = null, aggregateId: UUID? = null, eventType: String? = null, payload: JSONB? = null, status: String? = null, createdAt: OffsetDateTime? = null, publishedAt: OffsetDateTime? = null, retryCount: Int? = null): this() {
+    constructor(id: UUID? = null, aggregateType: String? = null, aggregateId: UUID? = null, eventType: String? = null, payload: JSONB? = null, status: String? = null, createdAt: OffsetDateTime? = null, publishedAt: OffsetDateTime? = null, retryCount: Int? = null, claimedAt: OffsetDateTime? = null, reclaimCount: Int? = null): this() {
         this.id = id
         this.aggregateType = aggregateType
         this.aggregateId = aggregateId
@@ -75,6 +83,8 @@ open class OutboxEventsRecord() : UpdatableRecordImpl<OutboxEventsRecord>(Outbox
         this.createdAt = createdAt
         this.publishedAt = publishedAt
         this.retryCount = retryCount
+        this.claimedAt = claimedAt
+        this.reclaimCount = reclaimCount
         resetChangedOnNotNull()
     }
 }
